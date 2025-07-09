@@ -15,29 +15,23 @@ exports.sendOTP = async (chatId, otp) => {
   }
 };
 
-// /start command to show buttons + log chat ID
-bot.onText(/\/start (.+)/, async (msg, match) => {
-  const username = match[1];
+bot.onText(/\/start link_(.+)/, async (msg, match) => {
   const chatId = msg.chat.id;
+  const username = match[1];
 
-  const User = require('../models/User');
   const user = await User.findOne({ username });
-
   if (!user) {
     return bot.sendMessage(
       chatId,
-      '❌ User not found in system. Please register first.'
+      '❌ Username not found. Please register first.'
     );
   }
+  console.log('chatId', chatId);
 
-  // Link chat ID
-  user.telegramChatId = String(chatId);
+  user.telegramChatId = chatId;
   await user.save();
 
-  bot.sendMessage(
-    chatId,
-    `✅ Telegram linked successfully for ${username}! You will now receive OTPs here.`
-  );
+  bot.sendMessage(chatId, `✅ Telegram linked successfully.`);
 });
 
 // Button handler for "Send OTP"

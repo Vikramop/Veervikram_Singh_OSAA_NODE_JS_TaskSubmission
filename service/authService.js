@@ -12,6 +12,11 @@ exports.issueToken = (user) => {
   });
 };
 
+exports.hashPasscode = async (passcode) => {
+  const saltRounds = 10; // or make it configurable via env
+  return await bcrypt.hash(passcode, saltRounds);
+};
+
 exports.issueRefreshToken = async (userId) => {
   const refreshToken = jwt.sign({ id: userId }, process.env.JWT_SECRET, {
     expiresIn: '7d',

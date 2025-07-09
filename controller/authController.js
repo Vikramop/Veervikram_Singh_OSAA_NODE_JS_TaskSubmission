@@ -26,7 +26,7 @@ exports.register = async (req, res) => {
     await otpService.storeOTP(user._id, otp);
     await sendOTP(telegramChatId, otp);
 
-    res.status(201).json({ msg: 'User registered, OTP sent' });
+    res.status(201).json({ msg: 'User registered' });
   } catch (err) {
     res.status(500).json({ msg: err.message });
   }
