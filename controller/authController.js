@@ -1,8 +1,11 @@
 const User = require('../models/User');
+const ActivityLog = require('../models/ActivityLog');
+const { logToMarkdown } = require('../utils/mdLogger');
 
 const otpService = require('../service/otpService');
 const authService = require('../service/authService');
 const { sendOTP } = require('../utils/telegramBot');
+const jwt = require('jsonwebtoken');
 
 exports.register = async (req, res) => {
   try {
@@ -40,6 +43,10 @@ exports.verifyOTP = async (req, res) => {
     const user = await User.findOne({ username });
     if (!user) return res.status(400).json({ msg: 'User not found' });
 
+    if (user.isBanned) {
+      return res.status(403).json({ msg: 'Your account is banned' });
+    }
+
     // ✅ Validate OTP using service
     await otpService.validateOTP(user._id, otp);
     console.log('OTP is valid');
@@ -54,6 +61,14 @@ exports.verifyOTP = async (req, res) => {
       token,
       refreshToken,
     });
+
+    logToMarkdown({
+      userId: user._id,
+      type: 'otp_validated',
+      endpoint: req.originalUrl,
+      ip: req.ip,
+      success: true,
+    });
   } catch (err) {
     res.status(400).json({ msg: err.message });
   }
@@ -63,19 +78,57 @@ exports.login = async (req, res) => {
   try {
     const { username, passcode } = req.body;
     const user = await User.findOne({ username });
-    if (!user) return res.status(404).json({ msg: 'User not found' });
+
+    if (!user) {
+      // Log failed login attempt
+      logToMarkdown({
+        userId: null,
+        type: 'login_attempt',
+        endpoint: req.originalUrl,
+        ip: req.ip,
+        success: false,
+      });
+
+      return res.status(404).json({ msg: 'User not found' });
+    }
+
+    if (user.isBanned) {
+      logToMarkdown({
+        userId: user._id,
+        type: 'login_attempt_banned',
+        endpoint: req.originalUrl,
+        ip: req.ip,
+        success: false,
+      });
+
+      return res.status(403).json({ msg: 'Your account is banned' });
+    }
 
     const match = await authService.comparePasscode(passcode, user.passcode);
-    if (!match) return res.status(401).json({ msg: 'Incorrect passcode' });
+    if (!match) {
+      logToMarkdown({
+        userId: user._id,
+        type: 'login_attempt_wrong_passcode',
+        endpoint: req.originalUrl,
+        ip: req.ip,
+        success: false,
+      });
 
-    // 1️⃣ Generate OTP
+      return res.status(401).json({ msg: 'Incorrect passcode' });
+    }
+
     const otp = otpService.generateOTP();
     await otpService.storeOTP(user._id, otp);
-
-    // 2️⃣ Send OTP via Telegram
     await sendOTP(user.telegramChatId, otp);
 
-    // 3️⃣ Respond that OTP was sent
+    logToMarkdown({
+      userId: user._id,
+      type: 'login_attempt',
+      endpoint: req.originalUrl,
+      ip: req.ip,
+      success: true,
+    });
+
     return res.status(200).json({
       msg: 'Login OTP sent to your Telegram. Please verify to get your token.',
     });
@@ -135,8 +188,26 @@ exports.refreshToken = async (req, res) => {
 
 exports.logout = async (req, res) => {
   const { refreshToken } = req.body;
+
   try {
+    if (!refreshToken) {
+      return res.status(400).json({ msg: 'Refresh token required' });
+    }
+
+    // ✅ Decode userId from token
+    const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
+    const userId = decoded.id;
+
+    // ❌ Revoke the token
     await authService.revokeRefreshToken(refreshToken);
+
+    // ✅ Log the logout activity
+    await ActivityLog.create({
+      userId,
+      type: 'logout',
+      ip: req.ip,
+    });
+
     return res.json({ msg: 'Logged out successfully' });
   } catch (err) {
     return res.status(500).json({ msg: err.message });

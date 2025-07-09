@@ -5,7 +5,7 @@ const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });
 const User = require('../models/User');
 const otpService = require('../service/otpService');
 
-// Existing OTP sender function
+// 📤 Send OTP utility
 exports.sendOTP = async (chatId, otp) => {
   try {
     const message = `🔐 Your OTP: *${otp}*\nExpires in 5 minutes.`;
@@ -15,10 +15,22 @@ exports.sendOTP = async (chatId, otp) => {
   }
 };
 
+// 🔗 Handle Telegram linking
 bot.onText(/\/start link_(.+)/, async (msg, match) => {
-  const chatId = msg.chat.id;
+  const chatId = String(msg.chat.id);
   const username = match[1];
 
+  // ⚠️ Block reuse of Telegram account
+  const existing = await User.findOne({ telegramChatId: chatId });
+  if (existing && existing.username !== username) {
+    return bot.sendMessage(
+      chatId,
+      `❌ This Telegram account is already linked to another username: *${existing.username}*`,
+      { parse_mode: 'Markdown' }
+    );
+  }
+
+  // ✅ Link to correct user
   const user = await User.findOne({ username });
   if (!user) {
     return bot.sendMessage(
@@ -26,18 +38,19 @@ bot.onText(/\/start link_(.+)/, async (msg, match) => {
       '❌ Username not found. Please register first.'
     );
   }
-  console.log('chatId', chatId);
 
   user.telegramChatId = chatId;
   await user.save();
 
-  bot.sendMessage(chatId, `✅ Telegram linked successfully.`);
+  bot.sendMessage(chatId, `✅ Telegram linked successfully to *${username}*`, {
+    parse_mode: 'Markdown',
+  });
 });
 
-// Button handler for "Send OTP"
+// 🔘 OTP Button handler (optional if you use inline keyboard in future)
 bot.on('callback_query', async (query) => {
-  const chatId = query.message.chat.id;
-  const user = await User.findOne({ telegramChatId: String(chatId) });
+  const chatId = String(query.message.chat.id);
+  const user = await User.findOne({ telegramChatId: chatId });
 
   if (query.data === 'send_otp') {
     if (!user) {
@@ -53,9 +66,7 @@ bot.on('callback_query', async (query) => {
     await bot.sendMessage(
       chatId,
       `🔐 Your OTP is: *${otp}*\n_Expires in 5 minutes_`,
-      {
-        parse_mode: 'Markdown',
-      }
+      { parse_mode: 'Markdown' }
     );
   }
 });

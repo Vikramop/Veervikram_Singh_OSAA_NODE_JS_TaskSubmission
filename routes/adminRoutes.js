@@ -15,5 +15,16 @@ router.patch(
   authMiddleware.checkRole('admin'),
   adminController.updateUserRole
 );
-
+router.patch(
+  '/user/:id/ban',
+  authMiddleware.protect,
+  authMiddleware.checkRole('admin'),
+  adminController.setBanStatus
+);
+router.get(
+  '/activity-logs',
+  authMiddleware.protect,
+  authMiddleware.checkRole('admin'),
+  adminController.getActivityLogs
+);
 module.exports = router;

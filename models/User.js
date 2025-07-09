@@ -10,6 +10,10 @@ const userSchema = new mongoose.Schema({
   telegramChatId: { type: String },
   role: { type: String, enum: ['user', 'admin'], default: 'user' },
   createdAt: { type: Date, default: Date.now },
+  isBanned: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 module.exports = mongoose.model('User', userSchema);

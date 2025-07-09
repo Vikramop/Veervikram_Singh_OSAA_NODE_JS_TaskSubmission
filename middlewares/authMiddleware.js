@@ -16,7 +16,24 @@ exports.protect = async (req, res, next) => {
   }
 };
 
-exports.checkRole = (role) => (req, res, next) => {
-  if (req.user.role !== role) return res.status(403).json({ msg: 'Forbidden' });
-  next();
+exports.checkRole = (requiredRole) => async (req, res, next) => {
+  try {
+    if (req.user.role !== requiredRole) {
+      // 🔐 Log unauthorized access
+      await ActivityLog.create({
+        userId: req.user._id,
+        type: 'unauthorized_access',
+        endpoint: req.originalUrl,
+        ip: req.ip,
+        timestamp: new Date(),
+      });
+
+      return res.status(403).json({ msg: 'Forbidden' });
+    }
+
+    next();
+  } catch (err) {
+    console.error('Role check error:', err.message);
+    return res.status(500).json({ msg: 'Internal Server Error' });
+  }
 };
