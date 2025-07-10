@@ -40,6 +40,7 @@ bot.onText(/\/start link_(.+)/, async (msg, match) => {
   }
 
   user.telegramChatId = chatId;
+  user.isTelegramLinked = true;
   await user.save();
 
   bot.sendMessage(chatId, `✅ Telegram linked successfully to *${username}*`, {

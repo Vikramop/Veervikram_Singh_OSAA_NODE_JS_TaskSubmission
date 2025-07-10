@@ -1,10 +1,13 @@
 const mongoose = require('mongoose');
 
 const activityLogSchema = new mongoose.Schema({
-  userId: mongoose.Schema.Types.ObjectId,
-  type: String, // 'login' or 'logout'
-  timestamp: { type: Date, default: Date.now },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+  username: { type: String, default: 'Unknown' },
+  type: { type: String, required: true },
+  endpoint: String,
   ip: String,
+  success: Boolean,
+  createdAt: { type: Date, default: Date.now },
 });
 
 module.exports = mongoose.model('ActivityLog', activityLogSchema);

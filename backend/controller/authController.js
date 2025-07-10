@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const Otp = require('../models/Otp');
 const ActivityLog = require('../models/ActivityLog');
 const { logToMarkdown } = require('../utils/mdLogger');
 
@@ -6,6 +7,7 @@ const otpService = require('../service/otpService');
 const authService = require('../service/authService');
 const { sendOTP } = require('../utils/telegramBot');
 const jwt = require('jsonwebtoken');
+const { logToDb } = require('../utils/logToDb');
 
 exports.register = async (req, res) => {
   try {
@@ -23,6 +25,7 @@ exports.register = async (req, res) => {
       referralCode,
       telegramChatId,
       passcode: hashed,
+      isTelegramLinked: false,
     });
 
     const otp = otpService.generateOTP();
@@ -53,6 +56,7 @@ exports.verifyOTP = async (req, res) => {
 
     // ✅ Generate tokens
     const token = authService.issueToken(user);
+
     const refreshToken = await authService.issueRefreshToken(user._id);
 
     // ✅ Send response
@@ -65,6 +69,15 @@ exports.verifyOTP = async (req, res) => {
     logToMarkdown({
       userId: user._id,
       type: 'otp_validated',
+      endpoint: req.originalUrl,
+      ip: req.ip,
+      success: true,
+    });
+
+    await logToDb({
+      userId: user._id,
+      username: user.username,
+      type: 'login_attempt',
       endpoint: req.originalUrl,
       ip: req.ip,
       success: true,
@@ -129,6 +142,15 @@ exports.login = async (req, res) => {
       success: true,
     });
 
+    await logToDb({
+      userId: user._id,
+      username: user.username,
+      type: 'login_attempt',
+      endpoint: req.originalUrl,
+      ip: req.ip,
+      success: true,
+    });
+
     return res.status(200).json({
       msg: 'Login OTP sent to your Telegram. Please verify to get your token.',
     });
@@ -143,15 +165,18 @@ exports.resendOTP = async (req, res) => {
 
     const user = await User.findOne({ username });
     if (!user) return res.status(404).json({ msg: 'User not found' });
-
-    // Optional: Rate-limit logic (example: 1 OTP per 60 seconds)
+    // Block banned users
+    if (user.isBanned) return res.status(403).json({ msg: 'Account banned' });
+    // Delete previous OTP so only the newest is valid
+    await Otp.deleteMany({ userId: user._id });
+    // Optional: Rate-limit logic (example: 1 OTP per 30 seconds)
     const recentOtp = await Otp.findOne({ userId: user._id }).sort({
       createdAt: -1,
     });
-    if (recentOtp && Date.now() - recentOtp.createdAt.getTime() < 60 * 1000) {
+    if (recentOtp && Date.now() - recentOtp.createdAt.getTime() < 10 * 1000) {
       return res
         .status(429)
-        .json({ msg: 'Please wait before requesting another OTP' });
+        .json({ msg: 'Please wait 30 sec before requesting another OTP' });
     }
 
     // Generate and store OTP
@@ -212,4 +237,15 @@ exports.logout = async (req, res) => {
   } catch (err) {
     return res.status(500).json({ msg: err.message });
   }
+};
+
+exports.getUsersMe = async (req, res) => {
+  const user = await User.findById(req.user.id);
+  if (!user) return res.status(404).json({ msg: 'User not found' });
+
+  res.json({
+    username: user.username,
+    telegramChatId: user.telegramChatId,
+    role: user.role,
+  });
 };
