@@ -8,3 +8,6 @@ export const updateUserRole = (userId: string, role: string, token: string) =>
 
 export const setBanStatus = (userId: string, ban: boolean, token: string) =>
   request(`/admin/user/${userId}/ban`, 'PATCH', { ban }, token);
+
+export const getActivityLogs = (token: string) =>
+  request('/admin/activity-logs', 'GET', undefined, token);

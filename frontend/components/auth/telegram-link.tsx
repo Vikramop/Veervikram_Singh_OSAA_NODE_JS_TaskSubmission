@@ -1,13 +1,19 @@
-"use client"
+'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { MessageCircle, ExternalLink, Loader2 } from "lucide-react"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { MessageCircle, ExternalLink, Loader2 } from 'lucide-react';
 
 interface TelegramLinkProps {
-  onLink: () => void
-  isLinking: boolean
+  onLink: () => void;
+  isLinking: boolean;
 }
 
 export function TelegramLink({ onLink, isLinking }: TelegramLinkProps) {
@@ -27,11 +33,17 @@ export function TelegramLink({ onLink, isLinking }: TelegramLinkProps) {
           <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
             <MessageCircle className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
           </div>
-          <h3 className="text-base sm:text-lg font-semibold text-gray-100 mb-2">Telegram Bot Integration</h3>
+          <h3 className="text-base sm:text-lg font-semibold text-gray-100 mb-2">
+            Telegram Bot Integration
+          </h3>
           <p className="text-gray-400 mb-4 text-sm">
-            Click the button below to open our Telegram bot and link your account
+            Click the button below to open our Telegram bot and link your
+            account
           </p>
-          <Badge variant="outline" className="border-blue-500 text-blue-400 text-xs">
+          <Badge
+            variant="outline"
+            className="border-blue-500 text-blue-400 text-xs"
+          >
             @SecureAuthBot
           </Badge>
         </div>
@@ -55,8 +67,10 @@ export function TelegramLink({ onLink, isLinking }: TelegramLinkProps) {
           )}
         </Button>
 
-        <p className="text-xs sm:text-sm text-gray-500">This will open Telegram in a new window</p>
+        <p className="text-xs sm:text-sm text-gray-500">
+          This will open Telegram in a new window
+        </p>
       </CardContent>
     </Card>
-  )
+  );
 }

@@ -19,9 +19,11 @@ const request = async (
     body: body ? JSON.stringify(body) : undefined,
   });
 
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.msg || 'Something went wrong');
-  return data;
+  if (!res.ok) {
+    const errorBody = await res.text(); // try to log raw text
+    throw new Error(`Error ${res.status}: ${errorBody}`);
+  }
+  return res.json();
 };
 
 export default request;
