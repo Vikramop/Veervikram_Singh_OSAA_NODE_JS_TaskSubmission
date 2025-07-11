@@ -208,6 +208,12 @@ Bot Response:
 ✅ Telegram linked successfully to john123
 ```
 
+## 📚 Swagger API Docs
+
+Visit: http://localhost:5000/api-docs
+
+All endpoints are documented with usage, examples, and schema.
+
 ## 🧠 Features Summary
 
 ✅ OTP-based login via Telegram
