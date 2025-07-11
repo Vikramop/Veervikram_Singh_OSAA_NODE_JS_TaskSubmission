@@ -219,3 +219,68 @@ Bot Response:
 ✅ Markdown + MongoDB activity logs
 
 ✅ Telegram bot integration
+
+# 💻 Secure Auth Frontend (Next.js)
+
+Modern, modular frontend for a secure authentication system using Next.js, Tailwind CSS, and Telegram OTP verification.
+
+---
+
+## 🧱 Tech Stack
+
+- **Next.js 14 (App Router)**
+- **Tailwind CSS**
+- **TypeScript**
+- **Lucide Icons**
+- **JWT-based auth**
+- **Telegram Integration**
+
+---
+
+## ⚙️ Features
+
+- ✅ User login / registration via Telegram OTP
+- ✅ CAPTCHA protection on OTP resend
+- ✅ Role-based dashboard (user/admin)
+- ✅ Auto token management
+- ✅ Admin panel: view users, change roles, ban/unban
+- ✅ Activity logs (admin view only)
+- ✅ Modular API integration and UI components
+
+---
+
+## 🛠️ Setup Instructions
+
+### 1. Clone the repo
+
+```bash
+cd frontend
+```
+
+### 2. Install dependencies
+
+```
+npm install
+```
+
+### 3. Environment Variables
+
+Create a _.env.local_ file in the root:
+
+```
+NEXT_PUBLIC_BACKEND_URL=http://localhost:5000/api
+NEXT_PUBLIC_TELEGRAM_BOT_LINK=https://t.me/your_bot_name?start=link_
+NEXT_PUBLIC_TELEGRAM_BOT_USERNAME=your_bot_name
+```
+
+### 4. 🚀 Run the app locally
+
+```
+npm run dev
+```
+
+The app will be live at http://localhost:3000
+
+## 📝 License
+
+MIT — Free to use.
